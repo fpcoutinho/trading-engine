@@ -1,60 +1,69 @@
 # trading-engine
 
-App Node que consome o feed de ordens simulado (Rust) do exercício Nexus e expõe as ordens em
-formato normalizado via HTTP. Arquitetura hexagonal: domínio puro no centro, ports como contratos,
-adapters nas bordas (`driving` = endpoints que a gente expõe, `driven` = chamadas para endpoints do feed).
+A Node app that consumes the simulated order feed (Rust) from the Nexus exercise and exposes the orders in a normalized format via HTTP. Hexagonal architecture: pure domain at the center, ports as contracts, adapters at the edges (`driving` = endpoints we expose, `driven` = calls to the feed endpoints).
 
-## Estrutura
+## Structure
 
-```
+```text
 src/
 ├── main.js                   # composition root
 ├── config/index.js           # env vars + defaults
-├── domain/                   # zero imports externos
+├── domain/                   # zero external imports
 │   ├── model/                # side, order, feed-message (parser)
-│   └── ports/                # order-feed-port (contrato)
+│   └── ports/                # order-feed-port (contract)
 ├── application/use-cases/    # get-recent-orders
 └── adapters/
-    ├── driving/http/         # express server + rotas
-    └── driven/feed/          # adapter HTTP contra o feed Rust
+    ├── driving/http/         # express server + routes
+    └── driven/feed/          # HTTP adapter against the Rust feed
+
 ```
 
-## Rodando
+## Running
 
-1. Suba o feed Rust (repo separado do exercício, `nexus-coding-exercise-exchange/services`):
-   ```bash
-   cd ../nexus-coding-exercise-exchange/services
-   cargo run -- --start-feed --num-accounts 20
-   ```
+1. Start the Rust feed (separate repo from the exercise, `nexus-coding-exercise-exchange/services`):
+```bash
+cd ../nexus-coding-exercise-exchange/services
+cargo run -- --start-feed --num-accounts 20
 
-2. Confira que o Rust está vivo, sem passar pelo Node:
-   ```bash
-   curl "http://127.0.0.1:3000/orders?n=3"
-   ```
+```
 
-3. Em outro terminal, suba este app:
-   ```bash
-   npm install
-   npm start
-   ```
 
-4. Prove a integração ponta a ponta:
-   ```bash
-   curl http://127.0.0.1:8080/health
-   curl "http://127.0.0.1:8080/feed/recent?n=5"
-   ```
-   Sucesso = a segunda chamada devolve ordens reais, com `side` `Buy`/`Sell` e symbols válidos, já
-   no shape normalizado (não mais o `{"New": {...}}` do serde).
+2. Check that Rust is alive, without going through Node:
+```bash
+curl "http://127.0.0.1:3000/orders?n=3"
 
-5. Teste unitário do parser, sem precisar do Rust rodando:
-   ```bash
-   npm test
-   ```
+```
+
+
+3. In another terminal, start this app:
+```bash
+npm install
+npm start
+
+```
+
+
+4. Prove the end-to-end integration:
+```bash
+curl http://127.0.0.1:8080/health
+curl "http://127.0.0.1:8080/feed/recent?n=5"
+
+```
+
+
+Success = the second call returns actual orders, with `side` `Buy`/`Sell` and valid symbols, already in the normalized shape (no longer the `{"New": {...}}` from serde).
+5. Unit test the parser, without needing Rust running:
+```bash
+npm test
+
+```
+
+
 
 ## Config
 
-Variáveis de ambiente (ver `.env.example`):
+Environment variables (see `.env.example`):
 
-- `PORT` — porta HTTP deste app (default `8080`)
-- `FEED_BASE_URL` — base URL do feed Rust (default `http://127.0.0.1:3000`)
-- `POLL_INTERVAL_MS` — reservado para o polling loop futuro (default `300`)
+* `PORT` — HTTP port for this app (default `8080`)
+* `FEED_BASE_URL` — base URL of the Rust feed (default `[http://127.0.0.1:3000](http://127.0.0.1:3000)`)
+* `POLL_INTERVAL_MS` — reserved for the future polling loop (default `300`)
